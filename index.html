@@ -1711,7 +1711,8 @@ const DEFAULT_TITLE = { name: "새내기 점장", desc: "누구나 처음은 있
     const c = state.current = state.queue[state.index];
     state.box = [];
     state.mood = "";
-    state.patienceMax = state.patience = c.cat ? CAT.patience : ROUNDS[state.round].patience + (c.needs ? (c.needs.length - 1) * 4 : 0);
+    // 일반 손님은 25초, 별똥별 피버 중 손님은 15초, 별이는 5~10초 머물러요.
+    state.patienceMax = state.patience = c.cat ? 5 + Math.random() * 5 : (state.fever > 0 ? 15 : 25);
     setMood(c.event?.timing === "start" ? "upset" : "happy");
     $("custName").innerHTML = c.name;
     $("customer").classList.toggle("cat", !!c.cat);
@@ -1861,7 +1862,12 @@ const DEFAULT_TITLE = { name: "새내기 점장", desc: "누구나 처음은 있
     const miss = c.needs.length - hits.length;
     const extra = state.box.filter(id => !c.needs.includes(id)).length;
     const ratio = Math.max(state.patience / state.patienceMax, 0);
-    const mileMul = (mod.mile || 1) * (tired() ? .5 : 1);
+    const elapsed = state.patienceMax - state.patience;
+    const isFeverTimer = state.patienceMax === 15;
+    const speedMul = isFeverTimer
+      ? (elapsed <= 5 ? 1.5 : state.patience < 5 ? .75 : 1)
+      : (elapsed <= 7 ? 1.5 : state.patience < 7 ? .75 : 1);
+    const mileMul = (mod.mile || 1) * (tired() ? .5 : 1) * speedMul;
     const tiredNote = tired() ? " · 지쳐서 MILE 절반" : "";
 
     if (!miss && !extra) {
